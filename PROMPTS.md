@@ -30,7 +30,7 @@ diagrams at different zoom levels
 
 Link to these in root README.md and the AGENTS.md
 
-If new docs generated contradict AGENTS.md verify against src code and attempt to reconcile.
+If new docs generated contradict AGENTS.md, verify against src code and attempt to reconcile.
 If not reconcileable, call this out in the docs and in AGENTS.md.
 ```
 
@@ -99,7 +99,7 @@ Your test is as only as good as its data. Get the most robust sample you can rea
 
 ## Verify the suite is green against unchanged code.
 ```
-Run the full characterization suite against the current code with no modifications. 
+If not already done, run the full characterization suite against the current code with no modifications. 
 Every assertion must pass. For any that does not, tell me whether the assertion is wrong or the 
 documented behavior is wrong — do not change application code to make a test pass.
 ```
