@@ -1,0 +1,36 @@
+{
+  "description": "An identifier absent from charge_points is rejected. This service never provisions charge points (integration point X-4).",
+  "documents": [
+    "docs/integration-points.md#x-4--charge-point-provisioning-is-unowned"
+  ],
+  "phases": [
+    {
+      "label": "unknown ident",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-9999",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-9999",
+            "msg_type": 1,
+            "wh": 7
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "bad"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM charge_points WHERE cp_ident='CP-9999'",
+        "value": "0"
+      }
+    ]
+  }
+}

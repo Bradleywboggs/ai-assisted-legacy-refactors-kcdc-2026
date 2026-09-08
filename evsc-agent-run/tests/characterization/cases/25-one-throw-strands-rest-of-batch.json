@@ -1,0 +1,97 @@
+{
+  "description": "A single unparseable `la` throws mid-frame, and the per-frame catch returns out of processInboxBatch from inside the loop -- abandoning every LATER frame in the same claimed batch holding its claim token. Found by the property suite (seed 1001); the 24 single-frame cases could not see it.",
+  "documents": [
+    "docs/known-issues.md#14-one-malformed-frame-strands-the-rest-of-its-batch",
+    "tests/property/README.md#what-it-found"
+  ],
+  "env": {
+    "BATCH": "8"
+  },
+  "phases": [
+    {
+      "label": "four frames, the first of which throws",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0011",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0011",
+            "msg_type": 9,
+            "wh": 1,
+            "la": "banana"
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-0003",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0003",
+            "msg_type": 1,
+            "wh": 7,
+            "la": "2021-01-01 00:00:00"
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-9999",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-9999",
+            "msg_type": 1,
+            "wh": 2
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 4242,
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "stdout_contains": [
+      "ERR"
+    ],
+    "app_state": "running",
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status NOT IN ('new','done','bad')",
+        "value": "4"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status IN ('done','bad')",
+        "value": "0"
+      },
+      {
+        "query": "SELECT COUNT(DISTINCT status) FROM inbox",
+        "value": "1"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM revisions",
+        "value": "0"
+      },
+      {
+        "query": "SELECT IFNULL(last_seen_at,'NULL') FROM charge_points WHERE cp_ident='CP-0001'",
+        "value": "NULL"
+      },
+      {
+        "query": "SELECT wh FROM charge_points WHERE cp_ident='CP-0001'",
+        "value": "0"
+      }
+    ]
+  }
+}

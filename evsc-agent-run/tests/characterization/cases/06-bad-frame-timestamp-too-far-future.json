@@ -1,0 +1,37 @@
+{
+  "description": "A local timestamp more than two days ahead is rejected before the charge point is even looked up.",
+  "documents": [
+    "docs/domain-overview.md#level-3--the-precise-contract"
+  ],
+  "phases": [
+    {
+      "label": "la in 2099",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 7,
+            "la": "2099-01-01 00:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "bad"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      }
+    ]
+  }
+}

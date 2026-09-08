@@ -1,0 +1,58 @@
+{
+  "description": "model_code 7 fans one frame into three synthetic inbox rows and writes ZERO meter_events, because no charge_points row exists per connector ident. Frame is still marked done (known issues 1, 2, 6).",
+  "documents": [
+    "docs/known-issues.md#1-a-multi-connector-frame-can-be-marked-done-having-written-no-readings"
+  ],
+  "phases": [
+    {
+      "label": "telemetry frame for CP-0002",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0002",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0002",
+            "msg_type": 1,
+            "wh": 900,
+            "as": "100:200:300",
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "stdout_excludes": [
+      "ERR",
+      "FATAL"
+    ],
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox",
+        "value": "4"
+      },
+      {
+        "query": "SELECT COUNT(DISTINCT body_hash) FROM inbox",
+        "value": "1"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status='done'",
+        "value": "4"
+      },
+      {
+        "query": "SELECT wh FROM charge_points WHERE id=2",
+        "value": "0"
+      },
+      {
+        "query": "SELECT IFNULL(last_event_id,'NULL') FROM charge_points WHERE id=2",
+        "value": "NULL"
+      }
+    ]
+  }
+}

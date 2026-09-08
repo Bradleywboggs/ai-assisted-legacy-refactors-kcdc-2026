@@ -1,0 +1,32 @@
+{
+  "description": "A body that is not JSON at all is rejected. Uses raw_body to bypass the JSON encoder so genuinely invalid bytes reach the inbox.",
+  "documents": [
+    "docs/domain-overview.md#level-3--the-precise-contract"
+  ],
+  "phases": [
+    {
+      "label": "non-JSON body",
+      "frames": [
+        {
+          "src": "gw",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "raw_body": "this is not json at all"
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "bad"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      }
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "description": "Happy path on model_code 0: one reading, parent row updated, audit written, Chicago->UTC conversion. Also pins the duplicated rollup_at audit rows.",
+  "documents": [
+    "docs/sequence-diagrams.md#zoom-3--one-frame-single-connector-hardware"
+  ],
+  "phases": [
+    {
+      "label": "one telemetry frame for CP-0001",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 1234,
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "stdout_excludes": [
+      "ERR",
+      "FATAL"
+    ],
+    "app_state": "running",
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "1"
+      },
+      {
+        "query": "SELECT utc_event_at FROM meter_events WHERE id=1",
+        "value": "2021-03-04 18:00:00"
+      },
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "done"
+      },
+      {
+        "query": "SELECT last_event_id FROM charge_points WHERE id=1",
+        "value": "1"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM revision_details WHERE col='rollup_at'",
+        "value": "2"
+      }
+    ]
+  }
+}

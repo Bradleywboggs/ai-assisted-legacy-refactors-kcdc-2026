@@ -1,0 +1,34 @@
+{
+  "description": "The same undecodable frame arriving via the gateway leaves last_seen_at NULL: the liveness write is gated on src != 'gw' (known issue 7, asymmetry).",
+  "documents": [
+    "docs/known-issues.md#7-rejected-frames-still-update-last_seen_at"
+  ],
+  "phases": [
+    {
+      "label": "garbage body, src=gw",
+      "frames": [
+        {
+          "src": "gw",
+          "cp_ident": "CP-0011",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "garbage": true
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "bad"
+      },
+      {
+        "query": "SELECT IFNULL(last_seen_at,'NULL') FROM charge_points WHERE cp_ident='CP-0011'",
+        "value": "NULL"
+      }
+    ]
+  }
+}

@@ -1,0 +1,75 @@
+# characterization baseline: 03-link-state-down-then-up
+# msg_type 14 then 9: link_state toggles, flags bit 2 set and never cleared, and each control frame also writes a meter_events row with wh 0.
+# documents: docs/domain-overview.md#msg_type-dispatch
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: disconnect (msg_type 14)
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0001|{"1":"CP-0001","msg_type":14,"la":"2021-03-04 12:00:00"}|56dbb9642ce6861d165e70b74fbab8620896dbe9|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|1|14|0|{"1":"CP-0001","msg_type":14,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0001|U|<CLOCK>
+2|0|ChargePoint|CP-0001|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|link_state|0|0
+2|2|rollup_at|NULL|2021-03-04 18:00:00
+3|2|local_event_at|NULL|2021-03-04 12:00:00
+4|2|last_event_id|NULL|1
+5|2|last_seen_at|NULL|2021-03-04 10:00:00
+6|2|rollup_at|NULL|2021-03-04 18:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+1|CP-0001|0|1|0|4|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|1|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+
+### phase 2: reconnect (msg_type 9)
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0001|{"1":"CP-0001","msg_type":14,"la":"2021-03-04 12:00:00"}|56dbb9642ce6861d165e70b74fbab8620896dbe9|2021-03-04 10:00:00
+2|cp|done|CP-0001|{"1":"CP-0001","msg_type":9,"la":"2021-03-04 12:05:00"}|0090b0a72b58a7286a9550f4adbc5db3af17c360|2021-03-04 10:05:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|1|14|0|{"1":"CP-0001","msg_type":14,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|NULL|0
+2|2|1|9|0|{"1":"CP-0001","msg_type":9,"la":"2021-03-04 12:05:00"}|2021-03-04 12:05:00|2021-03-04 18:05:00|NULL|NULL|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0001|U|<CLOCK>
+2|0|ChargePoint|CP-0001|U|<CLOCK>
+3|0|ChargePoint|CP-0001|U|<CLOCK>
+4|0|ChargePoint|CP-0001|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|link_state|0|0
+2|2|rollup_at|NULL|2021-03-04 18:00:00
+3|2|local_event_at|NULL|2021-03-04 12:00:00
+4|2|last_event_id|NULL|1
+5|2|last_seen_at|NULL|2021-03-04 10:00:00
+6|2|rollup_at|NULL|2021-03-04 18:00:00
+7|3|link_state|0|1
+8|4|rollup_at|2021-03-04 18:00:00|2021-03-04 18:05:00
+9|4|local_event_at|2021-03-04 12:00:00|2021-03-04 12:05:00
+10|4|last_event_id|1|2
+11|4|last_seen_at|2021-03-04 10:00:00|2021-03-04 10:05:00
+12|4|rollup_at|2021-03-04 18:00:00|2021-03-04 18:05:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+1|CP-0001|0|1|0|4|1|1|America/Chicago|NULL|NULL|2021-03-04 10:05:00|2021-03-04 12:05:00|2021-03-04 18:05:00|NULL|2|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+

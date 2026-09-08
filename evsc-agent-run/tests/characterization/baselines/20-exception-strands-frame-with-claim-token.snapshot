@@ -1,0 +1,30 @@
+# characterization baseline: 20-exception-strands-frame-with-claim-token
+# An unresolvable site timezone throws mid-frame. The rollback discards every write including the status change, leaving the row holding its claim token forever: not new, not done, not bad (known issue 5).
+# documents: docs/known-issues.md#5-stranded-frames-are-unrecoverable-without-manual-sql
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: frame for a charge point with a bad tz
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|<TOKEN>|CP-0001|{"1":"CP-0001","msg_type":1,"wh":99,"rd":"2021-03-03","rh":9}|b90f861d7a922bbdff961e8426ddb114e65e13dc|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+   <no rows>
+-- revisions (id|who|tname|target_id|op|at_)
+   <no rows>
+-- revision_details (id|rev_id|col|before_|after_)
+   <no rows>
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+1|CP-0001|0|1|0|0|0|1|Not/AZone|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+[PID] ERR DateTimeZone::__construct(): Unknown or bad timezone (Not/AZone)
+-- app file writes
+   <none>
+-- app container state: running
+

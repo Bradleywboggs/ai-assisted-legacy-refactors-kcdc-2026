@@ -1,0 +1,99 @@
+{
+  "description": "A single claimed batch containing good, bad and multi-connector frames. Asserts the whole batch outcome at the end of one unit of processing.",
+  "documents": [
+    "docs/sequence-diagrams.md#zoom-2--one-worker-cycle"
+  ],
+  "env": {
+    "BATCH": "8"
+  },
+  "phases": [
+    {
+      "label": "six frames in one batch",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 100,
+            "la": "2021-03-04 12:00:00"
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-0003",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0003",
+            "msg_type": 1,
+            "wh": 200,
+            "la": "2021-03-04 12:00:00"
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-0010",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "nope": 1
+          }
+        },
+        {
+          "src": "gw",
+          "cp_ident": "CP-9999",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-9999",
+            "msg_type": 1,
+            "wh": 1
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-0004",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0004",
+            "msg_type": 14,
+            "la": "2021-03-04 12:00:00"
+          }
+        },
+        {
+          "src": "cp",
+          "cp_ident": "CP-0002",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0002",
+            "msg_type": 1,
+            "wh": 300,
+            "as": "1:2:3",
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "stdout_excludes": [
+      "ERR",
+      "FATAL"
+    ],
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status='done'",
+        "value": "7"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status='bad'",
+        "value": "2"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "3"
+      }
+    ]
+  }
+}

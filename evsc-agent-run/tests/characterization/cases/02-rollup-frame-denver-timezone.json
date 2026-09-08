@@ -1,0 +1,53 @@
+{
+  "description": "rd/rh time source on America/Denver: rollup columns set, local_event_at NULL, charge_points.rollup_at never advances (known issue 8).",
+  "documents": [
+    "docs/known-issues.md#8-rollup_at-never-advances-for-rdrh-style-frames"
+  ],
+  "phases": [
+    {
+      "label": "rollup frame for CP-0003",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0003",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0003",
+            "msg_type": 1,
+            "wh": 5000,
+            "rd": "2021-03-03",
+            "rh": 14
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "stdout_excludes": [
+      "ERR"
+    ],
+    "sql": [
+      {
+        "query": "SELECT utc_event_at FROM meter_events WHERE id=1",
+        "value": "2021-03-03 21:00:00"
+      },
+      {
+        "query": "SELECT rollup_date FROM meter_events WHERE id=1",
+        "value": "2021-03-03"
+      },
+      {
+        "query": "SELECT rollup_hour FROM meter_events WHERE id=1",
+        "value": "14"
+      },
+      {
+        "query": "SELECT IFNULL(local_event_at,'NULL') FROM meter_events WHERE id=1",
+        "value": "NULL"
+      },
+      {
+        "query": "SELECT IFNULL(rollup_at,'NULL') FROM charge_points WHERE id=3",
+        "value": "NULL"
+      }
+    ]
+  }
+}

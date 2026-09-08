@@ -1,0 +1,5 @@
+# Per-scenario compose configuration, rewritten constantly.
+.env.runtime
+__pycache__/
+# Counterexamples ARE committed -- they are the record of what the suite found.
+# Delete individual files once promoted to a characterization case.

@@ -1,0 +1,50 @@
+{
+  "description": "m.sw sets settled; a gateway-sourced frame sets via_gateway and skips the liveness pre-write. Also covers connector_count and firmware major-version truncation.",
+  "documents": [
+    "docs/domain-overview.md#level-4--frame-semantics-field-by-field"
+  ],
+  "phases": [
+    {
+      "label": "gateway frame with metadata",
+      "frames": [
+        {
+          "src": "gw",
+          "cp_ident": "CP-0003",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0003",
+            "msg_type": 1,
+            "wh": 20,
+            "la": "2021-03-04 12:00:00",
+            "connector_count": 2,
+            "m": {
+              "sw": 1,
+              "firmware": "v7-beta3"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT settled FROM charge_points WHERE id=3",
+        "value": "1"
+      },
+      {
+        "query": "SELECT via_gateway FROM charge_points WHERE id=3",
+        "value": "1"
+      },
+      {
+        "query": "SELECT connector_count FROM charge_points WHERE id=3",
+        "value": "2"
+      },
+      {
+        "query": "SELECT firmware FROM charge_points WHERE id=3",
+        "value": "7"
+      }
+    ]
+  }
+}

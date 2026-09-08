@@ -1,0 +1,38 @@
+{
+  "description": "Undecodable frame from a direct source is marked bad, yet last_seen_at is still written because the liveness stamp precedes validation (known issue 7).",
+  "documents": [
+    "docs/known-issues.md#7-rejected-frames-still-update-last_seen_at"
+  ],
+  "phases": [
+    {
+      "label": "garbage body, src=cp",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0010",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "garbage": true
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "bad"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT last_seen_at FROM charge_points WHERE cp_ident='CP-0010'",
+        "value": "2021-03-04 10:00:00"
+      }
+    ]
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "description": "A posted tariff of 5 or below FAILS the alert gate. Inverted from a high tariff: the note IS persisted to charge_points.fault_note and alerted_at stays NULL. The audit detail is still written, by the generic diff loop rather than by the gate.",
+  "documents": [
+    "docs/integration-points.md#net-1--posted-tariff-lookup"
+  ],
+  "env": {
+    "LOOKUP_URL": "http://tariff:8080",
+    "TARIFF_MODE": "ok",
+    "TARIFF_VALUE": "3"
+  },
+  "phases": [
+    {
+      "label": "ground fault, cheap tariff",
+      "sql": [
+        "UPDATE charge_points SET tariff='OFFPEAK' WHERE id=1"
+      ],
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 10,
+            "la": "2021-03-04 12:00:00",
+            "nt": "ALERT: GROUND FAULT on phase A",
+            "m": {
+              "la": "41.88",
+              "lo": "-87.63"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 1,
+    "tariff_requests_include": [
+      "GET /r/41.88/-87.63"
+    ],
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM revision_details WHERE col='fault_note'",
+        "value": "1"
+      },
+      {
+        "query": "SELECT fault_note FROM charge_points WHERE id=1",
+        "value": "ALERT: GROUND FAULT on phase A"
+      },
+      {
+        "query": "SELECT IFNULL(alerted_at,'NULL') FROM charge_points WHERE id=1",
+        "value": "NULL"
+      }
+    ]
+  }
+}

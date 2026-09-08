@@ -1,0 +1,40 @@
+{
+  "description": "A heartbeat with no local timestamp rewrites inbox.received_at, a column owned by the upstream intake layer, to site-local now (integration point X-1).",
+  "documents": [
+    "docs/integration-points.md#x-1--inbox-is-a-shared-write-surface"
+  ],
+  "phases": [
+    {
+      "label": "msg_type 3 without la",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 3,
+            "wh": 55
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "done"
+      },
+      {
+        "query": "SELECT CASE WHEN received_at <> '2021-03-04 10:00:00' THEN 'rewritten' ELSE 'kept' END FROM inbox WHERE id=1",
+        "value": "rewritten"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "1"
+      }
+    ]
+  }
+}

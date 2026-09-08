@@ -1,0 +1,32 @@
+# characterization baseline: 02-rollup-frame-denver-timezone
+# rd/rh time source on America/Denver: rollup columns set, local_event_at NULL, charge_points.rollup_at never advances (known issue 8).
+# documents: docs/known-issues.md#8-rollup_at-never-advances-for-rdrh-style-frames
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: rollup frame for CP-0003
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0003|{"1":"CP-0003","msg_type":1,"wh":5000,"rd":"2021-03-03","rh":14}|1f0de030a88a09750cd5cc8b6526584597fba40f|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|3|1|5000|{"1":"CP-0003","msg_type":1,"wh":5000,"rd":"2021-03-03","rh":14}|NULL|2021-03-03 21:00:00|2021-03-03|14|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0003|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|wh|0|5000
+2|1|last_event_id|NULL|1
+3|1|last_seen_at|NULL|2021-03-04 10:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+3|CP-0003|5000|1|0|0|0|0|America/Denver|NULL|NULL|2021-03-04 10:00:00|NULL|NULL|NULL|1|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+

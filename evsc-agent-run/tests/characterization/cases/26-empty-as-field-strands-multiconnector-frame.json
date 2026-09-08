@@ -1,0 +1,55 @@
+{
+  "description": "On multi-connector hardware an empty `as` field yields an empty-string per-connector meter value, which MySQL strict mode rejects for the INT column -- throwing and stranding the frame. Only reachable once per-connector charge_points rows exist, so known issue 1 currently masks it. Found by the property suite (seed 20260907).",
+  "documents": [
+    "docs/known-issues.md#15-an-empty-as-field-strands-multi-connector-frames",
+    "tests/property/README.md#what-it-found"
+  ],
+  "phases": [
+    {
+      "label": "provision connector rows, then send an empty as field",
+      "sql": [
+        "INSERT INTO charge_points (id,cp_ident,wh,connector_count,model_code,flags,link_state,via_gateway,tz) VALUES (900,'CP-0002-1',0,1,0,0,0,0,'America/Chicago'),(901,'CP-0002-2',0,1,0,0,0,0,'America/Chicago'),(902,'CP-0002-3',0,1,0,0,0,0,'America/Chicago')"
+      ],
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0002",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0002",
+            "msg_type": 1,
+            "wh": 1234,
+            "as": "",
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "stdout_contains": [
+      "ERR",
+      "Incorrect integer value"
+    ],
+    "app_state": "running",
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status NOT IN ('new','done','bad')",
+        "value": "1"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox",
+        "value": "1"
+      },
+      {
+        "query": "SELECT wh FROM charge_points WHERE cp_ident='CP-0002'",
+        "value": "0"
+      }
+    ]
+  }
+}

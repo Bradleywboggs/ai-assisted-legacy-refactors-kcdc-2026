@@ -1,0 +1,28 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: evse
+      MYSQL_USER: ingest_svc
+      MYSQL_PASSWORD: ingest_svc
+    volumes:
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uingest_svc", "-pingest_svc"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: evse
+      DB_USER: ingest_svc
+      DB_PASS: ingest_svc
+    restart: unless-stopped

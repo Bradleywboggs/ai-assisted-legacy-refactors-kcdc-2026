@@ -1,0 +1,33 @@
+# characterization baseline: 22-heartbeat-rewrites-upstream-received-at
+# A heartbeat with no local timestamp rewrites inbox.received_at, a column owned by the upstream intake layer, to site-local now (integration point X-1).
+# documents: docs/integration-points.md#x-1--inbox-is-a-shared-write-surface
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: msg_type 3 without la
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0001|{"1":"CP-0001","msg_type":3,"wh":55}|d5dadcf75bd90737b72bee674cd95c399382171a|<CLOCK>
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|1|3|55|{"1":"CP-0001","msg_type":3,"wh":55}|NULL|NULL|NULL|NULL|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0001|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|wh|0|55
+2|1|last_event_id|NULL|1
+3|1|last_seen_at|NULL|2021-03-04 10:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+1|CP-0001|55|1|0|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|NULL|NULL|NULL|1|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+
+Warning: Undefined array key "la" in /app/src/ingest.php on line 159
+-- app file writes
+   <none>
+-- app container state: running
+

@@ -1,0 +1,69 @@
+# Disposable stack for the characterization suite.
+#
+# Differences from the production docker-compose.yml, all deliberate and all
+# documented in tests/characterization/README.md:
+#
+#   1. MySQL data lives on tmpfs, so the database is genuinely disposable and
+#      every `up` starts from a clean volume.
+#   2. `app` has restart: "no". Production uses `unless-stopped`, which would
+#      mask a crash; the suite must be able to observe one.
+#   3. `app` env is parameterised so each case can vary BATCH, POLL_INTERVAL_US,
+#      LOOKUP_URL, SHARD and SHARDS via --env-file.
+#   4. A recording mock stands in for the posted-tariff rate service.
+#
+# The `app` image is built from the real repository root, so the suite exercises
+# the actual shipped code. Nothing here names the implementation language.
+
+services:
+  db:
+    image: mysql:8.0
+    command:
+      - --default-time-zone=UTC
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: evse
+      MYSQL_USER: ingest_svc
+      MYSQL_PASSWORD: ingest_svc
+    tmpfs:
+      - /var/lib/mysql
+    volumes:
+      - ../../sql/schema.sql:/docker-entrypoint-initdb.d/00-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uingest_svc", "-pingest_svc"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  tariff:
+    build:
+      context: ./mock
+    environment:
+      TARIFF_MODE: ${TARIFF_MODE:-ok}
+      TARIFF_VALUE: ${TARIFF_VALUE:-9}
+      TARIFF_DELAY_MS: ${TARIFF_DELAY_MS:-0}
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request;urllib.request.urlopen('http://127.0.0.1:8080/__health').read()"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+  app:
+    build:
+      context: ../..
+    depends_on:
+      db:
+        condition: service_healthy
+      tariff:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: "3306"
+      DB_NAME: evse
+      DB_USER: ingest_svc
+      DB_PASS: ingest_svc
+      BATCH: ${BATCH:-32}
+      POLL_INTERVAL_US: ${POLL_INTERVAL_US:-50000}
+      LOOKUP_URL: ${LOOKUP_URL:-}
+      SHARD: ${SHARD:-0}
+      SHARDS: ${SHARDS:-1}
+    restart: "no"

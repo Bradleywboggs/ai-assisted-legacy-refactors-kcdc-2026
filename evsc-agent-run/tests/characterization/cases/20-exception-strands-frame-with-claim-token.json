@@ -1,0 +1,52 @@
+{
+  "description": "An unresolvable site timezone throws mid-frame. The rollback discards every write including the status change, leaving the row holding its claim token forever: not new, not done, not bad (known issue 5).",
+  "documents": [
+    "docs/known-issues.md#5-stranded-frames-are-unrecoverable-without-manual-sql"
+  ],
+  "phases": [
+    {
+      "label": "frame for a charge point with a bad tz",
+      "sql": [
+        "UPDATE charge_points SET tz='Not/AZone' WHERE id=1"
+      ],
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 99,
+            "rd": "2021-03-03",
+            "rh": 9
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "stdout_contains": [
+      "ERR"
+    ],
+    "app_state": "running",
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM inbox WHERE status NOT IN ('new','done','bad')",
+        "value": "1"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM revisions",
+        "value": "0"
+      },
+      {
+        "query": "SELECT IFNULL(last_seen_at,'NULL') FROM charge_points WHERE id=1",
+        "value": "NULL"
+      }
+    ]
+  }
+}

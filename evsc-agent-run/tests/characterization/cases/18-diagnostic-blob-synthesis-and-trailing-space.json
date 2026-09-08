@@ -1,0 +1,48 @@
+{
+  "description": "A fault flag with an OK note synthesises a note from the dbg blob. Locks in the discarded rtrim: the stored value keeps its trailing space (known issue 11).",
+  "documents": [
+    "docs/known-issues.md#11-minor-defects-and-dead-code"
+  ],
+  "phases": [
+    {
+      "label": "fl=1 with dbg markers",
+      "sql": [
+        "UPDATE charge_points SET fault_note='OK' WHERE id=1"
+      ],
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 10,
+            "la": "2021-03-04 12:00:00",
+            "fl": "1",
+            "sv": 5,
+            "hv": 2,
+            "dbg": "x;A1;y;B1;z;C1;w"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT CONCAT('[',fault_note,']') FROM meter_events WHERE id=1",
+        "value": "[GROUND FAULT. CONNECTOR LOCK FAULT. UNDER VOLTAGE. ]"
+      },
+      {
+        "query": "SELECT CONCAT('[',after_,']') FROM revision_details WHERE col='fault_note'",
+        "value": "[GROUND FAULT. CONNECTOR LOCK FAULT. UNDER VOLTAGE. ]"
+      },
+      {
+        "query": "SELECT fault_note FROM charge_points WHERE id=1",
+        "value": "OK"
+      }
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+# characterization baseline: 08-replay-is-idempotent
+# Resetting a processed frame to 'new' re-acknowledges it without writing a second reading. This is what makes strand recovery safe.
+# documents: docs/sequence-diagrams.md#replay-is-safe
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: initial processing
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0004|{"1":"CP-0004","msg_type":1,"wh":4242,"la":"2021-03-04 12:00:00"}|4c5785c3da281654ed6b781b1f9f754cf6f3c056|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|4|1|4242|{"1":"CP-0004","msg_type":1,"wh":4242,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0004|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|rollup_at|NULL|2021-03-04 18:00:00
+2|1|wh|0|4242
+3|1|local_event_at|NULL|2021-03-04 12:00:00
+4|1|last_event_id|NULL|1
+5|1|last_seen_at|NULL|2021-03-04 10:00:00
+6|1|rollup_at|NULL|2021-03-04 18:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+4|CP-0004|4242|2|253|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|1|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+
+### phase 2: replay the same inbox row
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0004|{"1":"CP-0004","msg_type":1,"wh":4242,"la":"2021-03-04 12:00:00"}|4c5785c3da281654ed6b781b1f9f754cf6f3c056|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|4|1|4242|{"1":"CP-0004","msg_type":1,"wh":4242,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0004|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|rollup_at|NULL|2021-03-04 18:00:00
+2|1|wh|0|4242
+3|1|local_event_at|NULL|2021-03-04 12:00:00
+4|1|last_event_id|NULL|1
+5|1|last_seen_at|NULL|2021-03-04 10:00:00
+6|1|rollup_at|NULL|2021-03-04 18:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+4|CP-0004|4242|2|253|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|1|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+

@@ -1,0 +1,4 @@
+# Last run's snapshots and diffs. Baselines are committed; results are not.
+.results/
+# Per-case compose configuration, rewritten on every case.
+.env.runtime

@@ -1,0 +1,46 @@
+{
+  "description": "msg_type 3 is the only value that updates a model_code 7 parent row, and it stores an inbox id in last_event_id while meter_events stays empty (known issue 3).",
+  "documents": [
+    "docs/known-issues.md#3-last_event_id-can-be-set-to-an-inbox-id"
+  ],
+  "phases": [
+    {
+      "label": "heartbeat frame for CP-0002",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0002",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0002",
+            "msg_type": 3,
+            "wh": 900,
+            "as": "100:200:300",
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT wh FROM charge_points WHERE id=2",
+        "value": "900"
+      },
+      {
+        "query": "SELECT last_event_id FROM charge_points WHERE id=2",
+        "value": "4"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM meter_events WHERE id=(SELECT last_event_id FROM charge_points WHERE id=2)",
+        "value": "0"
+      }
+    ]
+  }
+}

@@ -1,0 +1,86 @@
+# characterization baseline: 23-batch-of-mixed-frames
+# A single claimed batch containing good, bad and multi-connector frames. Asserts the whole batch outcome at the end of one unit of processing.
+# documents: docs/sequence-diagrams.md#zoom-2--one-worker-cycle
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: six frames in one batch
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0001|{"1":"CP-0001","msg_type":1,"wh":100,"la":"2021-03-04 12:00:00"}|60cb8a2308456a3660b52f06fa3c8b7ae51c5bbe|2021-03-04 10:00:00
+2|cp|done|CP-0003|{"1":"CP-0003","msg_type":1,"wh":200,"la":"2021-03-04 12:00:00"}|3dbd5a013f02803f06e91cf17cd6aaf3a2d484cf|2021-03-04 10:00:00
+3|cp|bad|CP-0010|{"nope":1}|8c78fff1c4afb5cd32664b02a37d03a46a36e54d|2021-03-04 10:00:00
+4|gw|bad|CP-9999|{"1":"CP-9999","msg_type":1,"wh":1}|d7144c9cb5e7535ae94e0b7c03cbb0af351a19c9|2021-03-04 10:00:00
+5|cp|done|CP-0004|{"1":"CP-0004","msg_type":14,"la":"2021-03-04 12:00:00"}|af84ba27df4e9284fc171eb58648218a418d1889|2021-03-04 10:00:00
+6|cp|done|CP-0002|{"1":"CP-0002","msg_type":1,"wh":300,"as":"1:2:3","la":"2021-03-04 12:00:00"}|42c2c16f832e801b597e6a3ad3e76223cbf17ac9|2021-03-04 10:00:00
+7|cp|done|CP-0002-1|"1":"CP-0002-1","msg_type":1,"wh":300,"as":"1:2:3","la":"2021-03-04 12:00:00"}|42c2c16f832e801b597e6a3ad3e76223cbf17ac9|2021-03-04 10:00:00
+8|cp|done|CP-0002-2|"1":"CP-0002-2","msg_type":1,"wh":300,"as":"1:2:3","la":"2021-03-04 12:00:00"}|42c2c16f832e801b597e6a3ad3e76223cbf17ac9|2021-03-04 10:00:00
+9|cp|done|CP-0002-3|"1":"CP-0002-3","msg_type":1,"wh":300,"as":"1:2:3","la":"2021-03-04 12:00:00"}|42c2c16f832e801b597e6a3ad3e76223cbf17ac9|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|1|1|100|{"1":"CP-0001","msg_type":1,"wh":100,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|NULL|0
+2|2|3|1|200|{"1":"CP-0003","msg_type":1,"wh":200,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 19:00:00|NULL|NULL|NULL|0
+3|5|4|14|0|{"1":"CP-0004","msg_type":14,"la":"2021-03-04 12:00:00"}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|NULL|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0001|U|<CLOCK>
+2|0|ChargePoint|CP-0003|U|<CLOCK>
+3|0|ChargePoint|CP-0004|U|<CLOCK>
+4|0|ChargePoint|CP-0004|U|<CLOCK>
+5|0|ChargePoint|CP-0002|U|<CLOCK>
+6|0|ChargePoint|CP-0002-1|U|<CLOCK>
+7|0|ChargePoint|CP-0002-2|U|<CLOCK>
+8|0|ChargePoint|CP-0002-3|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|rollup_at|NULL|2021-03-04 18:00:00
+2|1|wh|0|100
+3|1|local_event_at|NULL|2021-03-04 12:00:00
+4|1|last_event_id|NULL|1
+5|1|last_seen_at|NULL|2021-03-04 10:00:00
+6|1|rollup_at|NULL|2021-03-04 18:00:00
+7|2|rollup_at|NULL|2021-03-04 19:00:00
+8|2|wh|0|200
+9|2|local_event_at|NULL|2021-03-04 12:00:00
+10|2|last_event_id|NULL|2
+11|2|last_seen_at|NULL|2021-03-04 10:00:00
+12|2|rollup_at|NULL|2021-03-04 19:00:00
+13|3|link_state|0|0
+14|4|rollup_at|NULL|2021-03-04 18:00:00
+15|4|local_event_at|NULL|2021-03-04 12:00:00
+16|4|last_event_id|NULL|3
+17|4|last_seen_at|NULL|2021-03-04 10:00:00
+18|4|rollup_at|NULL|2021-03-04 18:00:00
+19|6|rollup_at|NULL|2021-03-04 18:00:00
+20|6|wh|0|300
+21|6|local_event_at|NULL|2021-03-04 12:00:00
+22|6|last_event_id|NULL|9
+23|6|last_seen_at|NULL|2021-03-04 10:00:00
+24|6|rollup_at|NULL|2021-03-04 18:00:00
+25|7|rollup_at|NULL|2021-03-04 18:00:00
+26|7|wh|0|
+27|7|local_event_at|NULL|2021-03-04 12:00:00
+28|7|last_event_id|NULL|9
+29|7|last_seen_at|NULL|2021-03-04 10:00:00
+30|7|rollup_at|NULL|2021-03-04 18:00:00
+31|8|rollup_at|NULL|2021-03-04 18:00:00
+32|8|wh|0|
+33|8|local_event_at|NULL|2021-03-04 12:00:00
+34|8|last_event_id|NULL|9
+35|8|last_seen_at|NULL|2021-03-04 10:00:00
+36|8|rollup_at|NULL|2021-03-04 18:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+1|CP-0001|100|1|0|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|1|NULL|NULL|0
+2|CP-0002|0|3|7|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|NULL|NULL|NULL|NULL|NULL|NULL|0
+3|CP-0003|200|1|0|0|0|0|America/Denver|NULL|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 19:00:00|NULL|2|NULL|NULL|0
+4|CP-0004|0|2|253|4|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|3|NULL|NULL|0
+10|CP-0010|0|1|0|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|NULL|NULL|NULL|NULL|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+

@@ -1,0 +1,53 @@
+{
+  "description": "A NULL tariff short-circuits before the HTTP call. The detail queued with a NULL revision id is dropped at flush time, but the alert gate appends an equivalent row carrying a valid id, so the audit trail is COMPLETE. Pins the observable impact of the dropped-row defect at zero.",
+  "documents": [
+    "docs/known-issues.md#9-audit-details-queued-before-their-header-are-discarded"
+  ],
+  "env": {
+    "LOOKUP_URL": "http://tariff:8080"
+  },
+  "phases": [
+    {
+      "label": "ground fault, tariff NULL",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 10,
+            "la": "2021-03-04 12:00:00",
+            "nt": "ALERT: GROUND FAULT on phase A",
+            "m": {
+              "la": "41.88",
+              "lo": "-87.63"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM revision_details WHERE col='fault_note'",
+        "value": "1"
+      },
+      {
+        "query": "SELECT after_ FROM revision_details WHERE col='fault_note'",
+        "value": "ALERT: GROUND FAULT on phase A"
+      },
+      {
+        "query": "SELECT IFNULL(fault_note,'NULL') FROM charge_points WHERE id=1",
+        "value": "NULL"
+      },
+      {
+        "query": "SELECT alerted_at FROM charge_points WHERE id=1",
+        "value": "2021-03-04 12:00:00"
+      }
+    ]
+  }
+}

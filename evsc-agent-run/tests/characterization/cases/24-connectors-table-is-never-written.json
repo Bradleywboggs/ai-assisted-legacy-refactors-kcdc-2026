@@ -1,0 +1,45 @@
+{
+  "description": "Standing invariant: this service only ever reads the connectors table. Exercises the fan-out path, which is the only code that touches it (integration point X-3).",
+  "documents": [
+    "docs/integration-points.md#x-3--connector-provisioning-is-unowned"
+  ],
+  "phases": [
+    {
+      "label": "fan-out plus a retired connector",
+      "sql": [
+        "UPDATE connectors SET retired=1 WHERE connector_ident='CP-0002-3'"
+      ],
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0002",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0002",
+            "msg_type": 1,
+            "wh": 900,
+            "as": "100:200:300",
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM connectors",
+        "value": "3"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox",
+        "value": "3"
+      },
+      {
+        "query": "SELECT retired FROM connectors WHERE connector_ident='CP-0002-3'",
+        "value": "1"
+      }
+    ]
+  }
+}

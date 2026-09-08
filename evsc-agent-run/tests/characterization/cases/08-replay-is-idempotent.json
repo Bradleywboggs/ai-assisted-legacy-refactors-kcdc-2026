@@ -1,0 +1,45 @@
+{
+  "description": "Resetting a processed frame to 'new' re-acknowledges it without writing a second reading. This is what makes strand recovery safe.",
+  "documents": [
+    "docs/sequence-diagrams.md#replay-is-safe"
+  ],
+  "phases": [
+    {
+      "label": "initial processing",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0004",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0004",
+            "msg_type": 1,
+            "wh": 4242,
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    },
+    {
+      "label": "replay the same inbox row",
+      "sql": [
+        "UPDATE inbox SET status='new' WHERE id=1"
+      ]
+    }
+  ],
+  "assert": {
+    "stdout_excludes": [
+      "ERR"
+    ],
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "1"
+      },
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "done"
+      }
+    ]
+  }
+}

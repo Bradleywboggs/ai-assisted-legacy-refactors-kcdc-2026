@@ -1,0 +1,48 @@
+{
+  "description": "A connector descriptor in metadata suppresses the fan-out block, and the simple insert is unreachable for model_code 7, so nothing is written (known issue 4).",
+  "documents": [
+    "docs/known-issues.md#4-the-mzd-metadata-key-silently-suppresses-all-event-writing"
+  ],
+  "phases": [
+    {
+      "label": "frame with m.zd set",
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0002",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0002",
+            "msg_type": 1,
+            "wh": 777,
+            "m": {
+              "zd": "Z1"
+            },
+            "la": "2021-03-04 12:00:00"
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 0,
+    "sql": [
+      {
+        "query": "SELECT COUNT(*) FROM meter_events",
+        "value": "0"
+      },
+      {
+        "query": "SELECT COUNT(*) FROM inbox",
+        "value": "1"
+      },
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "done"
+      },
+      {
+        "query": "SELECT wh FROM charge_points WHERE id=2",
+        "value": "0"
+      }
+    ]
+  }
+}

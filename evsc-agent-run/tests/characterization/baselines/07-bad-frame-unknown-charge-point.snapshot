@@ -1,0 +1,30 @@
+# characterization baseline: 07-bad-frame-unknown-charge-point
+# An identifier absent from charge_points is rejected. This service never provisions charge points (integration point X-4).
+# documents: docs/integration-points.md#x-4--charge-point-provisioning-is-unowned
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: unknown ident
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|bad|CP-9999|{"1":"CP-9999","msg_type":1,"wh":7}|4eb150d317b8f50bd0a752c3bf0a71d68732cabf|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+   <no rows>
+-- revisions (id|who|tname|target_id|op|at_)
+   <no rows>
+-- revision_details (id|rev_id|col|before_|after_)
+   <no rows>
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+

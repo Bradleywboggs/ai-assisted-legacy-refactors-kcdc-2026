@@ -1,0 +1,53 @@
+# characterization baseline: 09-multiconnector-fanout-writes-no-readings
+# model_code 7 fans one frame into three synthetic inbox rows and writes ZERO meter_events, because no charge_points row exists per connector ident. Frame is still marked done (known issues 1, 2, 6).
+# documents: docs/known-issues.md#1-a-multi-connector-frame-can-be-marked-done-having-written-no-readings
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: telemetry frame for CP-0002
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0002|{"1":"CP-0002","msg_type":1,"wh":900,"as":"100:200:300","la":"2021-03-04 12:00:00"}|568dae6f0155562551207bb7d7053652a3baece4|2021-03-04 10:00:00
+2|cp|done|CP-0002-1|"1":"CP-0002-1","msg_type":1,"wh":900,"as":"100:200:300","la":"2021-03-04 12:00:00"}|568dae6f0155562551207bb7d7053652a3baece4|2021-03-04 10:00:00
+3|cp|done|CP-0002-2|"1":"CP-0002-2","msg_type":1,"wh":900,"as":"100:200:300","la":"2021-03-04 12:00:00"}|568dae6f0155562551207bb7d7053652a3baece4|2021-03-04 10:00:00
+4|cp|done|CP-0002-3|"1":"CP-0002-3","msg_type":1,"wh":900,"as":"100:200:300","la":"2021-03-04 12:00:00"}|568dae6f0155562551207bb7d7053652a3baece4|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+   <no rows>
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0002|U|<CLOCK>
+2|0|ChargePoint|CP-0002-1|U|<CLOCK>
+3|0|ChargePoint|CP-0002-2|U|<CLOCK>
+4|0|ChargePoint|CP-0002-3|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|2|rollup_at|NULL|2021-03-04 18:00:00
+2|2|wh|0|900
+3|2|local_event_at|NULL|2021-03-04 12:00:00
+4|2|last_event_id|NULL|4
+5|2|last_seen_at|NULL|2021-03-04 10:00:00
+6|2|rollup_at|NULL|2021-03-04 18:00:00
+7|3|rollup_at|NULL|2021-03-04 18:00:00
+8|3|wh|0|
+9|3|local_event_at|NULL|2021-03-04 12:00:00
+10|3|last_event_id|NULL|4
+11|3|last_seen_at|NULL|2021-03-04 10:00:00
+12|3|rollup_at|NULL|2021-03-04 18:00:00
+13|4|rollup_at|NULL|2021-03-04 18:00:00
+14|4|wh|0|
+15|4|local_event_at|NULL|2021-03-04 12:00:00
+16|4|last_event_id|NULL|4
+17|4|last_seen_at|NULL|2021-03-04 10:00:00
+18|4|rollup_at|NULL|2021-03-04 18:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+2|CP-0002|0|3|7|0|0|1|America/Chicago|NULL|NULL|2021-03-04 10:00:00|NULL|NULL|NULL|NULL|NULL|NULL|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+

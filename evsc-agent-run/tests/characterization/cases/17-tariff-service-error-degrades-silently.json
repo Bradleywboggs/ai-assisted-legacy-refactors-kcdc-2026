@@ -1,0 +1,49 @@
+{
+  "description": "A 500 from the rate service is indistinguishable from an unknown tariff: no log line, no retry, and the fault note is treated as if the tariff were unavailable.",
+  "documents": [
+    "docs/integration-points.md#net-1--posted-tariff-lookup"
+  ],
+  "env": {
+    "LOOKUP_URL": "http://tariff:8080",
+    "TARIFF_MODE": "http500"
+  },
+  "phases": [
+    {
+      "label": "rate service returns 500",
+      "sql": [
+        "UPDATE charge_points SET tariff='PEAK' WHERE id=1"
+      ],
+      "frames": [
+        {
+          "src": "cp",
+          "cp_ident": "CP-0001",
+          "received_at": "2021-03-04 10:00:00",
+          "body": {
+            "1": "CP-0001",
+            "msg_type": 1,
+            "wh": 10,
+            "la": "2021-03-04 12:00:00",
+            "nt": "ALERT: GROUND FAULT on phase A",
+            "m": {
+              "la": "41.88",
+              "lo": "-87.63"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "assert": {
+    "tariff_request_count": 1,
+    "stdout_excludes": [
+      "ERR",
+      "FATAL"
+    ],
+    "sql": [
+      {
+        "query": "SELECT status FROM inbox WHERE id=1",
+        "value": "done"
+      }
+    ]
+  }
+}

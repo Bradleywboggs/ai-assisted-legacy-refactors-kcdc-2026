@@ -1,0 +1,30 @@
+# characterization baseline: 21-malformed-json-body-rejected
+# A body that is not JSON at all is rejected. Uses raw_body to bypass the JSON encoder so genuinely invalid bytes reach the inbox.
+# documents: docs/domain-overview.md#level-3--the-precise-contract
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: non-JSON body
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|gw|bad|CP-0001|this is not json at all|c3ae5d2142780a6bcebc2e58a37e49a71f272967|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+   <no rows>
+-- revisions (id|who|tname|target_id|op|at_)
+   <no rows>
+-- revision_details (id|rev_id|col|before_|after_)
+   <no rows>
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+   <none>
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+
