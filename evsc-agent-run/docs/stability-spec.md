@@ -459,7 +459,7 @@ environment on the next restart.
 
 Before merging any change to `src/`:
 
-1. **Both suites green.** `tests/characterization/run.sh` byte-identical, and a
+1. **Both suites green.** `tests/characterization/run.py` byte-identical, and a
    property run of at least 30 scenarios.
 2. **If a baseline moved**, it is a behavior change, not a refactor. Follow the
    bugfix workflow in [`tests/README.md`](../tests/README.md): read every diff,

@@ -81,12 +81,14 @@ still available directly when you need a flag the Makefile does not wrap:
 
 ```bash
 cd tests/characterization
-./run.sh --keep-up '20-*'           # leave the stack up for poking around
+./run.py --keep-up '20-*'           # leave the stack up for poking around
 ```
 
-Requirements: `docker` (with compose v2), `make`, `bash` 4+, `python3`, and `jq`
-or `jaq`. No PHP is needed on the host — not even to lint, which runs in the
-container via `make lint`.
+Requirements: `docker` (with compose v2), `make`, and `python3`. No PHP is
+needed on the host — not even to lint, which runs in the container via
+`make lint`. Both suites are Python and share
+[`harness/stack.py`](harness/stack.py), so there is nothing to install and no
+GNU-vs-BSD shell-tool divergence between Linux and macOS.
 
 A full run takes roughly five to six minutes: each case stops the worker, resets
 the database, restarts the worker, and waits for the batch to settle.

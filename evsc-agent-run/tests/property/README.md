@@ -203,7 +203,7 @@ workflow:
 3. Write it as a characterization case in
    [`../characterization/cases/`](../characterization/cases/), translating
    `fleet_setup` to the case's `phases[].sql` and `frames` to `phases[].frames`.
-4. Record its baseline: `cd ../characterization && ./run.sh --record 'NN-*'`.
+4. Record its baseline: `cd ../characterization && ./run.py --record 'NN-*'`.
 5. Document it in [`docs/known-issues.md`](../../docs/known-issues.md) and add a
    gotcha to [`AGENTS.md`](../../AGENTS.md).
 6. If the oracle was wrong rather than the service, fix the oracle and say so in

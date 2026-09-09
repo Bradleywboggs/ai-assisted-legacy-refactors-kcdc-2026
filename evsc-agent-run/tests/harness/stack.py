@@ -1,10 +1,14 @@
 """
-Disposable-stack plumbing for the property suite.
+Disposable-stack plumbing shared by both test suites.
 
-Reuses tests/characterization/docker-compose.test.yml verbatim so the two suites
-cannot drift apart on topology; only the compose project name differs, letting
-both run without colliding. Observation is black-box: SQL, the recorded HTTP
-request log, container logs, and `docker diff`. Nothing here reads service source.
+Both suites drive tests/characterization/docker-compose.test.yml verbatim so
+they cannot drift apart on topology; only the compose project name and env file
+differ, letting both run without colliding. Observation is black-box: SQL, the
+recorded HTTP request log, container logs, and `docker diff`. Nothing here reads
+service source.
+
+Call configure() before anything else -- there is no default project, because a
+wrong guess would silently drive the other suite's containers.
 """
 
 import base64
@@ -15,12 +19,23 @@ import time
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
-PROP_DIR = HERE.parent
-REPO_ROOT = PROP_DIR.parent.parent
-COMPOSE_FILE = REPO_ROOT / "tests" / "characterization" / "docker-compose.test.yml"
-PROJECT = os.environ.get("PROP_PROJECT", "evse-prop")
-ENV_FILE = PROP_DIR / ".env.runtime"
+TESTS_DIR = HERE.parent
+REPO_ROOT = TESTS_DIR.parent
+COMPOSE_FILE = TESTS_DIR / "characterization" / "docker-compose.test.yml"
 DB = "evse"
+
+# Pristine reference copies captured by reset_db(), keyed by live table.
+PRISTINE = {"charge_points": "_p_cp", "connectors": "_p_conn"}
+
+PROJECT = None
+ENV_FILE = None
+
+
+def configure(project, env_file):
+    """Bind this process to one compose project and its --env-file."""
+    global PROJECT, ENV_FILE
+    PROJECT = project
+    ENV_FILE = Path(env_file)
 
 
 class StackError(RuntimeError):
@@ -28,11 +43,15 @@ class StackError(RuntimeError):
 
 
 def _compose(*args, capture=True, check=True, timeout=300):
+    if PROJECT is None:
+        raise StackError("stack.configure() was never called")
     cmd = ["docker", "compose", "-p", PROJECT, "-f", str(COMPOSE_FILE),
            "--env-file", str(ENV_FILE), *args]
     proc = subprocess.run(cmd, capture_output=capture, text=True, timeout=timeout)
     if check and proc.returncode != 0:
-        raise StackError(f"{' '.join(args[:2])} failed: {proc.stderr[-2000:]}")
+        raise StackError(
+            f"docker compose {' '.join(args)} failed (exit {proc.returncode}):\n"
+            f"{(proc.stderr or proc.stdout or '')[-2000:]}")
     return proc
 
 
@@ -99,6 +118,42 @@ def sql_rows(query):
 def sql_value(query):
     rows = sql_rows(query)
     return rows[0][0] if rows else None
+
+
+def sql_root_value(query):
+    """
+    Query as root. The service user deliberately lacks the PROCESS privilege,
+    but the suite owns the container's root credentials (declared in
+    docker-compose.test.yml) and needs information_schema.innodb_trx. Read-only
+    -- never used to write.
+    """
+    p = _compose("exec", "-T", "db", "mysql", "-uroot", "-proot",
+                 "--database", DB, "-N", "-B", "-e", query, check=False)
+    if p.returncode != 0:
+        raise StackError(f"root query failed: {p.stderr[-1500:]}\n{query[:500]}")
+    rows = [l for l in p.stdout.splitlines() if l != ""]
+    return rows[0] if rows else None
+
+
+def active_trx():
+    """
+    Count transactions that represent in-flight frame processing, excluding this
+    very connection. Two signals, either sufficient:
+
+        trx_rows_modified > 0   uncommitted writes exist
+        trx_started >= 1s ago   long-lived, so not the idle claim probe
+
+    An idle worker is never transaction-free: every poll cycle claimBatch runs
+    begin / SELECT ... FOR UPDATE SKIP LOCKED / commit, twenty times a second at
+    the suites' POLL_INTERVAL_US. That probe modifies no rows and lives well
+    under a millisecond, so it matches neither signal. A worker blocked mid-frame
+    matches both. Gating on a bare COUNT(*) makes quiescence unreachable.
+    """
+    return int(sql_root_value(
+        "SELECT COUNT(*) FROM information_schema.innodb_trx"
+        " WHERE trx_mysql_thread_id <> CONNECTION_ID()"
+        "   AND (trx_rows_modified > 0"
+        "        OR trx_started <= NOW() - INTERVAL 1 SECOND)") or 0)
 
 
 def reset_db():
@@ -204,19 +259,35 @@ def mock_requests():
     return [l for l in (p.stdout or "").splitlines() if l.strip()]
 
 
+def mock_recreate():
+    """
+    Recreate the mock from whatever the env file currently holds, leaving every
+    other service alone. The caller owns the env file: the characterization
+    suite writes a whole case env, of which TARIFF_* is only a part.
+    """
+    _compose("up", "-d", "--no-deps", "tariff", timeout=300)
+
+
 def mock_configure(mode="ok", value="9", delay_ms="0"):
     write_env({"TARIFF_MODE": mode, "TARIFF_VALUE": value,
                "TARIFF_DELAY_MS": delay_ms})
-    _compose("up", "-d", "--no-deps", "tariff", timeout=300)
+    mock_recreate()
 
 
 # -------------------------------------------------------------- quiescence ----
 
 def wait_quiesce(timeout=90, stable_needed=3, poll=0.4):
     """
-    Settle on: nothing claimable remains AND observable state has stopped
-    changing. Stranded rows never reach a terminal status, so stability rather
-    than terminality is the stop condition.
+    Settle on: nothing claimable remains, no transaction is open, AND observable
+    state has stopped changing. Stranded rows never reach a terminal status, so
+    stability rather than terminality is the stop condition.
+
+    The open-transaction gate is load-bearing. A worker blocked in an outbound
+    HTTP call has already claimed its row and has not committed anything, so
+    inbox.status='new' is 0 and every table looks frozen: pure polling declares
+    quiescence mid-frame and observes a torn state. Whether it does so depends on
+    how fast `docker compose exec` returns, which makes any recorded baseline a
+    recording of the machine that produced it. See active_trx().
     """
     last, stable = None, 0
     deadline = time.time() + timeout
@@ -233,7 +304,7 @@ def wait_quiesce(timeout=90, stable_needed=3, poll=0.4):
             "   IFNULL(last_seen_at,''),IFNULL(rollup_at,''),settled,via_gateway)"
             "  )),0) FROM charge_points)")
         key = (pending, tuple(fingerprint[0]) if fingerprint else (), len(mock_requests()))
-        if pending == "0" and key == last:
+        if pending == "0" and active_trx() == 0 and key == last:
             stable += 1
             if stable >= stable_needed:
                 return True

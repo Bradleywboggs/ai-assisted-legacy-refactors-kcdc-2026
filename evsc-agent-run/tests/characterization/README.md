@@ -8,8 +8,8 @@ it covers the refactor and bugfix workflows. This file documents the mechanics.
 
 ```
 characterization/
-  run.sh                     runner: verify | record | list
-  lib/harness.sh             black-box observation helpers
+  run.py                     runner: verify | record | list
+  ../harness/stack.py        black-box observation helpers, shared with property
   docker-compose.test.yml    disposable stack: db + tariff mock + service
   mock/tariff_service.py     recording stand-in for the rate service
   cases/*.json               one file per case -- data, not code
@@ -171,6 +171,14 @@ credentials, and the claim query — is the real thing.
 - **Baselines encode DST.** Fixtures sit in March 2021, so Chicago is UTC−6 and
   Denver UTC−7. Moving a fixture across a DST boundary changes the expected UTC
   values, correctly.
+- **Quiescence depends on transaction visibility, not on elapsed time.**
+  `wait_quiesce` gates on `information_schema.innodb_trx` (as root, which the
+  service user cannot read) because a worker blocked in an outbound HTTP call has
+  already claimed its row and committed nothing: `inbox.status='new'` is 0 and
+  every table looks frozen. Polling alone declares quiescence mid-frame and
+  records a torn state, and whether it does depends on how fast
+  `docker compose exec` returns — which made case 16's baseline a recording of
+  the machine that produced it. It was re-recorded once the gate landed.
 
 ## Troubleshooting
 
@@ -179,7 +187,7 @@ always means the service failed to start rather than that it hung — a syntax
 error in the source, or a failed image build. Check it directly:
 
 ```bash
-./run.sh --keep-up '01-*'          # leave the stack up
+./run.py --keep-up '01-*'          # leave the stack up
 docker compose -p evse-charz -f docker-compose.test.yml logs app
 ```
 

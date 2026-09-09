@@ -20,6 +20,7 @@ converting it to a characterization case; see README.md.
 
 import argparse
 import json
+import os
 import random
 import sys
 import time
@@ -27,8 +28,10 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from lib import generator, oracle, stack  # noqa: E402
+from harness import stack  # noqa: E402
+from lib import generator, oracle  # noqa: E402
 
 CORPUS = Path(__file__).resolve().parent / "corpus"
 
@@ -329,6 +332,9 @@ def main():
     ap.add_argument("--no-shrink", action="store_true")
     ap.add_argument("--keep-up", action="store_true")
     args = ap.parse_args()
+
+    stack.configure(os.environ.get("PROP_PROJECT", "evse-prop"),
+                    Path(__file__).resolve().parent / ".env.runtime")
 
     seed = args.seed if args.seed is not None else random.randrange(1, 2**31)
     print(f"property suite: seed={seed}")

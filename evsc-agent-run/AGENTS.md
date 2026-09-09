@@ -58,8 +58,8 @@ graph LR
 | `bin/` | Executable entry points. Contains only `worker.php`. |
 | `src/` | All application code: `db.php` (infrastructure), `ingest.php` (logic). |
 | `sql/` | `schema.sql` — source of truth for the six tables, plus seed fleet data. |
-| `tests/` | Two black-box suites plus their workflow docs. Nothing here references application source. |
-| `scripts/` | Helpers the `Makefile` delegates to: `smoke.sh`, `check-docs.py`. |
+| `tests/` | Two black-box suites plus their workflow docs, both Python. `harness/stack.py` is the driver they share. Nothing here references application source. |
+| `scripts/` | Helpers the `Makefile` delegates to: `smoke.py`, `check-docs.py`. |
 
 ## Development Commands
 
@@ -162,8 +162,8 @@ MySQL container, mock the one outbound HTTP dependency, and assert observable
 state only after each batch quiesces. Neither references application source, so
 neither depends on the implementation language.
 
-`make test` needs `docker`, `make`, `bash`, `python3`, and `jq`/`jaq` — no host
-PHP. It exits `0` only when every baseline matches byte-for-byte and every
+`make test` needs `docker`, `make`, and `python3` — no host PHP, no `jq`, no
+bash 4. It exits `0` only when every baseline matches byte-for-byte and every
 declared assertion holds.
 
 **Which workflow applies is decided by the suite, not by intent** — full detail in [`tests/README.md`](tests/README.md):

@@ -4,8 +4,8 @@
 # there is one obvious entry point without a second source of truth. Run `make`
 # with no arguments for the target list.
 #
-# Host requirements: docker (with compose v2), bash, python3, and jq or jaq.
-# PHP is NOT required on the host -- linting runs inside the container.
+# Host requirements: docker (with compose v2) and python3. Neither suite needs
+# bash 4, jq, or PHP on the host -- linting runs inside the container.
 
 SHELL := /usr/bin/env bash
 .SHELLFLAGS := -eu -o pipefail -c
@@ -43,7 +43,7 @@ test: test-char test-prop ## Run both test suites (the regression gate)
 
 test-char: ## Characterization suite: verify baselines byte-for-byte (~6 min)
 	@printf "==> characterization suite\n"
-	@cd $(CHAR_DIR) && ./run.sh $(CASES)
+	@cd $(CHAR_DIR) && ./run.py $(CASES)
 
 test-prop: ## Property suite: generated scenarios vs invariants (~10 min)
 	@printf "==> property suite\n"
@@ -51,7 +51,7 @@ test-prop: ## Property suite: generated scenarios vs invariants (~10 min)
 		$(if $(SEED),--seed $(SEED),)
 
 char-list: ## List characterization cases with descriptions
-	@cd $(CHAR_DIR) && ./run.sh --list
+	@cd $(CHAR_DIR) && ./run.py --list
 
 char-record: ## Re-record baselines — BEHAVIOR CHANGE ONLY, needs CONFIRM=1
 	@if [ "$(CONFIRM)" != "1" ]; then \
@@ -65,7 +65,7 @@ char-record: ## Re-record baselines — BEHAVIOR CHANGE ONLY, needs CONFIRM=1
 		printf 'See tests/README.md for the full bugfix workflow.\n'; \
 		exit 1; \
 	fi
-	@cd $(CHAR_DIR) && ./run.sh --record $(CASES)
+	@cd $(CHAR_DIR) && ./run.py --record $(CASES)
 
 prop-replay: ## Replay a saved counterexample: make prop-replay FILE=corpus/x.json
 	@if [ -z "$(FILE)" ]; then \
@@ -115,7 +115,7 @@ db: ## Open a MySQL shell against the service database
 	docker compose exec db mysql -u ingest_svc -pingest_svc evse
 
 smoke: ## Inject one frame end-to-end and report what happened
-	@bash scripts/smoke.sh
+	@python3 scripts/smoke.py
 
 ##@ Housekeeping
 
@@ -127,6 +127,6 @@ clean: ## Remove test artefacts and tear down every stack this repo starts
 	-@docker compose -p evse-prop -f $(CHAR_DIR)/docker-compose.test.yml \
 		down -v --remove-orphans >/dev/null 2>&1
 	@printf "==> removing transient files\n"
-	@rm -rf $(CHAR_DIR)/.results $(CHAR_DIR)/.env.runtime
-	@rm -rf $(PROP_DIR)/.env.runtime $(PROP_DIR)/lib/__pycache__
+	@rm -rf $(CHAR_DIR)/.results $(CHAR_DIR)/.env.runtime $(CHAR_DIR)/__pycache__
+	@rm -rf $(PROP_DIR)/.env.runtime $(PROP_DIR)/lib/__pycache__ tests/harness/__pycache__
 	@printf "    baselines and corpus counterexamples kept (they are committed artefacts)\n"

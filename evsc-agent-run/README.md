@@ -51,7 +51,7 @@ the [`Makefile`](Makefile) wraps every development command.
 
 - PHP 8.2, `pdo_mysql` — inside the container only; **not needed on the host**
 - MySQL 8.0, InnoDB
-- To develop: `docker` (with compose v2), `make`, `bash`, `python3`, and `jq`
+- To develop: `docker` (with compose v2), `make`, and `python3`
 
 ## Running locally
 

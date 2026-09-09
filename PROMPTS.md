@@ -86,6 +86,17 @@ The assertion-granularity line is load-bearing: without it you get assertions on
 state, which is mechanism rather than specification, and the suite will then fail on any honest
 refactor.
 
+The masking line is load-bearing too: snapshots must normalize every value
+that varies across runs or refactors without reflecting a behavior change.
+Process ids, datetimes near "now", claim tokens, and source line numbers or
+file paths emitted by runtime warnings and stack traces must all be masked
+to stable tokens. A baseline that pins "on line 159" will go red when a
+comment is added two functions above, and that red is noise — it forces a
+re-record for a non-behavioral reason, undermining the rule that re-recording
+means a deliberate behavior change. Audit every value the snapshot captures
+and ask "would this change if I reordered, extracted, or commented the source
+without changing behavior?" If yes, mask it.
+
 ## Gather test data.
 ```
 If read access to production-quality data exists, gather a substantial sampling of data

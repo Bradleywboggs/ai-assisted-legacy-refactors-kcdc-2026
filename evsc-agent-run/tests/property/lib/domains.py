@@ -11,7 +11,7 @@ This module is data and pure functions only. It performs no I/O.
 """
 
 # Fleet identifiers present in the real seed (sql/schema.sql). Kept in sync by
-# lib/stack.py, which reads the fleet from the database rather than trusting
+# ../../harness/stack.py, which reads the fleet from the database rather than
 # this list; these are the values the generator *draws* from.
 SEED_SINGLE_CONNECTOR = ["CP-0001", "CP-0003", "CP-0010", "CP-0011", "CP-0012"]
 SEED_MULTI_CONNECTOR = ["CP-0002"]          # model_code 7
