@@ -119,6 +119,270 @@ For the time remaining I'm going to show you my current workflow for approaching
 
 **DEMO**
 
+**Beat 0 — Framing**
+
+For the time remaining I'm going to walk through my workflow for discovering the hidden
+specification, and then making changes against it.
+
+The foundation is characterization tests. Michael Feathers introduced the term in 2004.
+A characterization test pins behavior as-is. It makes no claim about correctness. It holds
+everything in place with equal weight.
+
+That last part is the problem, and it's what the rest of this is about. We're going to
+point that flat, undifferentiated pin at a pragmatic version of correct.
+
+The edges tell us what actually matters.
+
+---
+
+**Beat 1 — Housekeeping**
+
+**_[Open terminal.]_**
+
+Two notes before I start.
+
+First, the repository. This is a scaled-down, IP-scrubbed version of the ingestion app I've
+been describing, recast into a different domain. Same pathologies, approved for the stage.
+
+Second, tooling. The terminal is Warp. Warp sells its own AI subscription and can act as a
+harness; I don't use it that way anymore. My harness is Oh My Pi, which is
+subscription-agnostic, and I'm driving it with a Claude subscription.
+
+And this is a fast-forward with markers. The original session ran over ninety minutes. The
+agent turns are the reason I'm not doing this live.
+
+---
+
+**Beat 2 — `/init`**
+
+**_[Marker: init.]_**
+
+First time in a new repository, this is what you do regardless of harness or model. There's
+a command like this.
+
+```
+/init
+```
+
+The agent generates a repository guidelines document. Project overview. Architecture and
+data flow, sometimes with diagrams. Local development workflow. The state of the tests and
+how to run them, if they exist. Sometimes gotchas — some harnesses call them footguns.
+
+**_[Open `evsc-agent-run/AGENTS.md`. Scroll the gotchas section.]_**
+
+This is the README for your agent. But read it yourself. It's enlightening.
+
+---
+
+**Beat 3 — Docs for humans**
+
+**_[Marker: docs.]_**
+
+Having prioritized the agent's context, now I have it build up mine.
+
+**_[Paste the docs prompt from `PROMPTS.md`.]_**
+
+I ask for a `docs/` directory aimed at a human who doesn't have their bearings in this repo.
+Domain overview. Sequence diagrams. Entity relationships. Architecture. And I tell it to
+link them from the README and from AGENTS.md — they're mainly for me, but they're useful to
+the agents too.
+
+**_[Open `evsc-agent-run/docs/domain-overview.md`. Land on level 0.]_**
+
+My favorite is the domain overview. I ask for the application's place in the broader system
+at increasing levels of detail.
+
+Level zero is how you describe your job at your kid's school function. Somebody asks what
+you do. You don't open with jargon. You say something like this — electric vehicle chargers
+report how much power they've moved, whether anything is plugged in, whether they're broken.
+Those messages queue up. This application picks them up, makes sense of them, and puts them
+somewhere.
+
+**_[Scroll to a deeper level.]_**
+
+And it goes down from there.
+
+The real purpose of this stage is to get *you* equipped to exercise judgment over everything
+the model hands you after this point. It's about shortening that runway.
+
+Is it circular? Somewhat. Two mitigations. Have a second agent do an adversarial review of
+the first one's output — I'm a heavy user of this. And demand the evidence: show me the
+proof of that claim.
+
+Because the worst mistakes I have made with AI, and the worst I've watched other people make,
+all came from the same place. Trusting a plausible assertion that was built on inference.
+
+---
+
+**Beat 4 — The edge inventory**
+
+**_[Marker: integration points.]_**
+
+**_[Paste the integration points prompt.]_**
+
+Now I have it document every integration point in one file. Database writes. API calls.
+Message passes. File writes. Environment. And explicitly: anything I might not be aware of.
+
+**_[Open `evsc-agent-run/docs/integration-points.md`.]_**
+
+Every SQL statement by id. The one outbound HTTP call. Environment variables. Clocks.
+Cross-team contracts. A risk register.
+
+**Read this file.** Pass it around your team. If something here smells off, you're missing
+context — go get it. If something is *missing*, you will find out later, and it will be
+expensive. This is the inventory everything downstream is built against.
+
+---
+
+**Beat 5 — Building the suite**
+
+**_[Marker: characterization.]_**
+
+**_[Paste the characterization prompt.]_**
+
+Now build the suite against that inventory. Capture behavior at the edges so that everything
+externally observable is pinned. Because it's *externally* observable, I tell it the test
+code must be language-agnostic — black box. These tests should catch any change to outward
+behavior and let me change everything on the inside.
+
+For the database: use a disposable container. If you have read access to a production-quality
+schema, replicate it exactly. If you don't, infer the structure from usage. API calls and
+message passes can be mocked — but preserve the payloads and assert on them.
+
+And one line that's doing more work than it looks like: every assertion must be evaluated at
+the end of a unit of processing. Without that, you get assertions on intermediate state, and
+intermediate state is mechanism, not specification. Then the suite fails on every honest
+refactor and the effort dies.
+
+**_[Open `evsc-agent-run/tests/README.md`.]_**
+
+This is what came out. The README tells you everything you need to operate it — including
+the two workflows, which is the part I care about.
+
+For a refactor, these tests pass and stay byte-identical. That's the whole contract.
+
+For a bugfix, behavior moves on purpose. Some of what's pinned here is acknowledged as
+wrong. Fixing it changes the snapshot, so the workflow is: pin the intended new behavior
+first, make the change, read every diff, then re-record.
+
+**_[Show `make char-record` refusing without `CONFIRM=1`.]_**
+
+It even guards the re-record command, because recording during a refactor is exactly how an
+unreviewed behavior change gets committed.
+
+**_[Open `evsc-agent-run/tests/characterization/cases/` and `baselines/`.]_**
+
+Cases and baselines. Twenty-six of them here, and going through it, fairly exhaustive.
+
+One honest note. I gave it license to be language-agnostic. It wrote the harness in bash.
+That is not my preference. I didn't think to specify, and this is what I got. In practice
+I'd push back and ask for Python or Node — or if the suite got slow enough to matter and it
+wasn't purely IO-bound, have it rewritten in something like Go.
+
+---
+
+**Beat 6 — Test data**
+
+**_[Marker: data.]_**
+
+**_[Paste the test data prompt.]_**
+
+Your test is only as good as its data.
+
+If you are able and allowed, give the agent read access to production-quality data and let
+it go find the real shapes — every state those messages actually show up in. That can take
+real time up front. And if you're going to commit the generated inputs, scrub them.
+
+If you don't have that access, property-based testing and fuzzing are your friends.
+
+**_[Open `evsc-agent-run/tests/property/`.]_**
+
+These will increase your total suite runtime by orders of magnitude. They're also how you
+test the limits of your candidate specification. Two of the defects in this repo were found
+by the property suite, not by anyone reading code — and then promoted into characterization
+cases twenty-five and twenty-six. That's the intended pipeline between the two.
+
+---
+
+**Beat 7 — Green against unchanged code**
+
+**_[Marker: verify.]_**
+
+My agent consistently generated the suite and ran it in the same turn. If yours doesn't,
+prompt for this explicitly, and make it the very next thing you do.
+
+**_[Paste the verification prompt.]_**
+
+Run the full suite against the current code, unmodified. Every assertion must pass. For any
+that doesn't, tell me whether the assertion is wrong or the documented behavior is wrong.
+Do not change application code to make a test pass.
+
+Until this is green you don't have a baseline. You have a hypothesis. A suite that has never
+passed can't tell you whether a later red is real — and *"oh, those were already failing"* is
+how a characterization effort quietly dies.
+
+This is the cheapest step in the whole workflow and the one most likely to get skipped.
+
+**_[Recording gap. If the drop is visible on screen:]_** The recorder dropped the next couple
+of prompts. They're in `PROMPTS.md`, which is in the repo behind the QR code at the end.
+
+---
+
+**Beat 8 — The specification**
+
+**_[Marker: spec.]_**
+
+This is the artifact we've been driving at the whole time. And note what's happening: we're
+generating it from behavior, while the behavior is held in place.
+
+**_[Paste the spec prompt.]_**
+
+Based on the code and the characterization tests, define what must remain true no matter
+what else changes, in order to preserve system stability. Split it into functional and
+non-functional requirements. Then add a section covering obvious bugs, potential latent bugs,
+and questionable behavior that something may be depending on.
+
+**_[Open `evsc-agent-run/docs/stability-spec.md`.]_**
+
+Seventy-five numbered requirements, each with a status and its evidence.
+
+And then the section that matters most for what comes next. Obvious bugs. Latent bugs —
+hazards that only appear once you change something specific. And questionable behavior that
+consumers may already be standing on.
+
+Verify this. Look at it. Take an interest in the things that look wrong.
+
+And we are not going to automatically change them. What's obviously wrong stays pinned, and
+gets documented right here. That's what buys us a clear path to fixing it later — on purpose,
+with the diff as the deliverable.
+
+This is also the document you put in front of an SME. Where the tests and the business
+disagree, you have probably found a bug — and possibly one something else depends on. Note
+it. Don't let it trigger an immediate change.
+
+---
+
+**Beat 9 — Handing control back**
+
+**_[Marker: makefile.]_**
+
+Last step, because I'm a stickler for determinism.
+
+**_[Paste the reproducibility prompt.]_**
+
+Wrap every core development command in a script — a Makefile or equivalent — and update the
+README, the tests README, and AGENTS.md.
+
+**_[Run `make` bare. Show the target list.]_**
+
+This is the handoff. You started with something inherently probabilistic that can read more
+of the system than you ever will. You end with a codified workflow, where the developer is
+in charge and in control.
+
+Commit these. Push them. Circulate them.
+
+Then start making changes.
+
 **The approach**
 
 **1. Capture the existing behavior at the edges.** Feathers calls these characterization tests. They pin current behavior as-is — they make no claim that it's correct, and that is the point. On their own they pin _everything_ equally, which is why the edges matter: the edges tell you which of it counts. That is the baseline.
