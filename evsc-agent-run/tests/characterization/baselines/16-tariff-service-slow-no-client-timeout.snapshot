@@ -7,9 +7,9 @@
 
 ### phase 1: ground fault against a slow service
 -- inbox (id|src|status|cp_ident|body|body_hash|received_at)
-1|cp|<TOKEN>|CP-0001|{"1":"CP-0001","msg_type":1,"wh":10,"la":"2021-03-04 12:00:00","nt":"ALERT: GROUND FAULT on phase A","m":{"la":"41.88","lo":"-87.63"}}|c7168661e4eb7abcecab2c0a9d9befeb2682c17f|2021-03-04 10:00:00
+1|cp|done|CP-0001|{"1":"CP-0001","msg_type":1,"wh":10,"la":"2021-03-04 12:00:00","nt":"ALERT: GROUND FAULT on phase A","m":{"la":"41.88","lo":"-87.63"}}|c7168661e4eb7abcecab2c0a9d9befeb2682c17f|2021-03-04 10:00:00
 -- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
-   <no rows>
+1|1|1|1|10|{"1":"CP-0001","msg_type":1,"wh":10,"la":"2021-03-04 12:00:00","nt":"ALERT: GROUND FAULT on phase A","m":{"la":"41.88","lo":"-87.63"}}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|ALERT: GROUND FAULT on phase A|0
 -- revisions (id|who|tname|target_id|op|at_)
 1|0|ChargePoint|CP-0001|U|<CLOCK>
 -- revision_details (id|rev_id|col|before_|after_)

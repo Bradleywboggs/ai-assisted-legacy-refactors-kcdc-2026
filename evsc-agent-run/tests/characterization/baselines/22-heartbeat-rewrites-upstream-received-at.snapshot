@@ -26,7 +26,7 @@
    <none>
 -- app stdout
 
-Warning: Undefined array key "la" in /app/src/ingest.php on line 159
+Warning: Undefined array key "la" in /app/src/ingest.php on line <N>
 -- app file writes
    <none>
 -- app container state: running
