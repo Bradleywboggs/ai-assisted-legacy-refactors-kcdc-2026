@@ -6,3 +6,11 @@
 # Raw asciinema casts exceed GitHub's 100 MiB blob limit; commit the .gz instead.
 # Replay: gunzip -c evsc-agent-run.cast.gz > /tmp/run.cast && asciinema play /tmp/run.cast
 *.cast
+
+# Talk scripts stay local-only: they are delivery notes, not artefacts anyone
+# else should read or diff. Untracked with `git rm --cached`, still on disk.
+talk.md
+talk.docx
+talk-v3.md
+demo-script.md
+~$*
