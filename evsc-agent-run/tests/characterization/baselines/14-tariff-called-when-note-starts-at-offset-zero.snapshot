@@ -1,0 +1,37 @@
+# characterization baseline: 14-tariff-called-when-note-starts-at-offset-zero
+# A fault note beginning exactly at offset 0 is missed by the strpos truthiness bug, so no HTTP call is made (known issue 10). postedTariff therefore stays null, which still passes the alert gate: alerted_at is set and fault_note is not persisted.
+# documents: docs/known-issues.md#10-strpos-truthiness-bug-in-fault-detection
+#
+# Masked values: <CLOCK> clock-derived datetime, <TOKEN> in-flight
+# claim token, [PID] worker process id.
+
+### phase 1: note begins with GROUND FAULT
+-- inbox (id|src|status|cp_ident|body|body_hash|received_at)
+1|cp|done|CP-0001|{"1":"CP-0001","msg_type":1,"wh":10,"la":"2021-03-04 12:00:00","nt":"GROUND FAULT on phase A","m":{"la":"41.88","lo":"-87.63"}}|b8eedc4b0c365fa76269ad0f53ffb6d557704dfc|2021-03-04 10:00:00
+-- meter_events (id|inbox_id|cp_id|msg_type|wh|raw|local_event_at|utc_event_at|rollup_date|rollup_hour|fault_note|flags)
+1|1|1|1|10|{"1":"CP-0001","msg_type":1,"wh":10,"la":"2021-03-04 12:00:00","nt":"GROUND FAULT on phase A","m":{"la":"41.88","lo":"-87.63"}}|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|NULL|GROUND FAULT on phase A|0
+-- revisions (id|who|tname|target_id|op|at_)
+1|0|ChargePoint|CP-0001|U|<CLOCK>
+-- revision_details (id|rev_id|col|before_|after_)
+1|1|rollup_at|NULL|2021-03-04 18:00:00
+2|1|fault_note|NULL|GROUND FAULT on phase A
+3|1|wh|0|10
+4|1|local_event_at|NULL|2021-03-04 12:00:00
+5|1|last_event_id|NULL|1
+6|1|last_seen_at|NULL|2021-03-04 10:00:00
+7|1|rollup_at|NULL|2021-03-04 18:00:00
+8|1|alerted_at|NULL|2021-03-04 12:00:00
+-- charge_points CHANGED vs seed (id|cp_ident|wh|connector_count|model_code|flags|link_state|via_gateway|tz|tariff|firmware|last_seen_at|local_event_at|rollup_at|rollup_event_id|last_event_id|fault_note|alerted_at|settled)
+1|CP-0001|10|1|0|0|0|1|America/Chicago|PEAK|NULL|2021-03-04 10:00:00|2021-03-04 12:00:00|2021-03-04 18:00:00|NULL|1|NULL|2021-03-04 12:00:00|0
+   rows_inserted=0 rows_deleted=0
+-- connectors CHANGED vs seed (id|cp_id|connector_ident|connector_no|panel|retired)
+   <none>
+   rows_inserted=0 rows_deleted=0
+-- tariff requests
+GET /r/41.88/-87.63
+-- app stdout
+   <empty>
+-- app file writes
+   <none>
+-- app container state: running
+
