@@ -14,3 +14,8 @@ talk.docx
 talk-v3.md
 demo-script.md
 ~$*
+
+# Talk authoring tooling (markdown -> docx renderer and its Word style donor).
+# Local-only for the same reason as the scripts above. Leading slash keeps this
+# to the repo root -- evsc-agent-run/scripts/ is tracked and must stay tracked.
+/scripts/
